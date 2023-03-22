@@ -31,7 +31,10 @@ export class AuthService {
     }
 
     async checkToken(token: string) {
-        // return this.jwtService.verify();
+        return this.jwtService.verify(token, {
+            audience: 'users',
+            issuer: 'login',
+        });
     }
 
     async login(email: string, password: string) {
