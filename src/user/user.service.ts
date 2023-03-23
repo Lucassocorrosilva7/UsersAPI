@@ -30,18 +30,18 @@ export class UserService {
         });
     }
 
-    async update({ name, email, birthAt, password }: UpdatePutUserDTO, id: number) {
+    async update({ name, email, birthAt, password, role }: UpdatePutUserDTO, id: number) {
 
         await this.exists(id);
 
 
         return this.prisma.user.update({
             where: { id },
-            data: { name, email, password, birthAt: birthAt ? new Date(birthAt) : null },
+            data: { name, email, password, birthAt: birthAt ? new Date(birthAt) : null, role },
         });
     }
 
-    async updatePartial({ name, email, birthAt, password }: UpdatePatchUserDTO, id: number) {
+    async updatePartial({ name, email, birthAt, password, role }: UpdatePatchUserDTO, id: number) {
 
         await this.exists(id);
 
@@ -63,6 +63,11 @@ export class UserService {
         if (password) {
             data.password = password;
         }
+
+        if (role) {
+            data.role = role;
+        }
+
 
         return this.prisma.user.update({
             data,

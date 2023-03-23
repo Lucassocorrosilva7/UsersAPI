@@ -7,4 +7,5 @@ export class UpdatePatchUserDTO extends PartialType(CreateUserDTO) {
     email: string;
     birthAt: string;
     password: string;
+    role: number;
 }
