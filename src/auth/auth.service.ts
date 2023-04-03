@@ -4,6 +4,9 @@ import { UserService } from 'src/user/user.service';
 import { AuthRegisterDTO } from "./dto/auth-register.dto";
 import * as bcrypt from "bcrypt";
 import { MailerService } from "@nestjs-modules/mailer/dist";
+import { InjectRepository } from "@nestjs/typeorm";
+import { UserEntity } from "src/user/entity/user.entity";
+import { Repository } from "typeorm";
 
 @Injectable()
 export class AuthService {
@@ -14,10 +17,12 @@ export class AuthService {
     constructor(
         private readonly jwtService: JwtService,
         private readonly userService: UserService,
-        private readonly mailer: MailerService
+        private readonly mailer: MailerService,
+        @InjectRepository(UserEntity)
+        private usersRepository: Repository<UserEntity>
     ) { }
 
-    createToken(user: User) {
+    createToken(user:UserEntity) {
         return {
             accessToken: this.jwtService.sign({
                 id: user.id,
@@ -54,11 +59,14 @@ export class AuthService {
     }
 
     async login(email: string, password: string) {
-        const user = await this.prisma.user.findFirst({
+
+        const user = await this.usersRepository.findOne({
             where: {
                 email
             }
         });
+
+
 
         if (!user) {
             throw new UnauthorizedException('E-mail e/ou senha incorreta.');
@@ -72,11 +80,7 @@ export class AuthService {
     }
 
     async forget(email: string) {
-        const user = await this.prisma.user.findFirst({
-            where: {
-                email,
-            }
-        });
+        const user = await this.usersRepository.findOneBy({email});
 
         if (!user) {
             throw new UnauthorizedException('E-mail está incorreto.');
@@ -122,29 +126,23 @@ export class AuthService {
             const salt = await bcrypt.genSalt();
             password = await bcrypt.hash(password, salt);
 
-            const user = await this.prisma.user.update({
-                where: {
-                    id: Number(data.id),
-                },
-                data: {
-                    password,
-                }
+            await this.usersRepository.update(Number(data.id), {
+                password, 
             });
+
+            const user = await this.userService.show(Number(data.id));
 
             return this.createToken(user);
 
         } catch (e) {
             throw new BadRequestException(e);
         }
-
-
-
     }
 
     async register(data: AuthRegisterDTO) {
         const user = await this.userService.create(data);
 
-        return this.createToken(user);
+        // return this.createToken(user);
 
     }
 }
